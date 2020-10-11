@@ -5,18 +5,19 @@ import java.time.Clock
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.DoubleSummaryStatistics
+import java.util.concurrent.ConcurrentHashMap
 
 object StatisticsStorage {
-    private var storage: MutableList<HashMap<Long, Double>> = mutableListOf()
+    private var storage: MutableList<ConcurrentHashMap<Long, Double>> = mutableListOf()
 
     fun resetStorage() {
         synchronized(storage) { storage = mutableListOf() }
     }
 
     fun addTransactionToStorage(transaction: Transaction) {
-        synchronized(storage) {
-            storage.add(hashMapOf(transaction.timestamp.toEpochSecond(ZoneOffset.UTC) to transaction.amount))
-        }
+        val hashMap = ConcurrentHashMap<Long, Double>()
+        hashMap[transaction.timestamp.toEpochSecond(ZoneOffset.UTC)] = transaction.amount
+        storage.add(hashMap)
     }
 
     fun getStatisticsFromLast60Seconds(): DoubleSummaryStatistics {
